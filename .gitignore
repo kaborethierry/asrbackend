@@ -21,4 +21,4 @@ Thumbs.db
 
 # Build
 dist/
-build/
+build/node_modules/
