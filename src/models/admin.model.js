@@ -1,5 +1,5 @@
 // src/models/admin.model.js
-const db = require('../config/db');
+const db = require('../config/db');  // ← CORRECTION ICI
 const bcrypt = require('bcryptjs');
 
 // Récupérer un utilisateur par son email
@@ -16,11 +16,9 @@ const getUserByEmail = async (email) => {
 // Vérifier le mot de passe
 const verifyPassword = async (user, password) => {
   try {
-    // Si le mot de passe est hashé avec bcrypt
     if (user.password && user.password.startsWith('$2')) {
       return bcrypt.compare(password, user.password);
     }
-    // Pour les mots de passe en clair (admin123)
     return user.password === password;
   } catch (error) {
     console.error('Erreur verifyPassword:', error);
