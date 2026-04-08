@@ -1,4 +1,5 @@
-const { pool } = require('../config/db');
+// src/models/pelerinage.model.js
+const pool = require('../config/db');  // ← CORRECTION : sans les {}
 
 const getAll = async (params = {}) => {
   let query = `SELECT * FROM pelerinages WHERE 1=1`;
@@ -20,7 +21,6 @@ const getAll = async (params = {}) => {
 
   const [rows] = await pool.execute(query, values);
   
-  // Formater les données JSON
   return rows.map(row => {
     // Gallery
     if (row.gallery && typeof row.gallery === 'string') {
@@ -72,56 +72,51 @@ const getAll = async (params = {}) => {
 
 const getById = async (id) => {
   const [rows] = await pool.execute('SELECT * FROM pelerinages WHERE id = ?', [id]);
-  if (rows.length > 0) {
-    const row = rows[0];
-    
-    // Gallery
-    if (row.gallery && typeof row.gallery === 'string') {
-      try {
-        row.gallery = JSON.parse(row.gallery);
-      } catch (e) {
-        row.gallery = [];
-      }
-    } else if (!row.gallery) {
+  if (rows.length === 0) return null;
+  
+  const row = rows[0];
+  
+  if (row.gallery && typeof row.gallery === 'string') {
+    try {
+      row.gallery = JSON.parse(row.gallery);
+    } catch (e) {
       row.gallery = [];
     }
-    
-    // Itinerary
-    if (row.itinerary && typeof row.itinerary === 'string') {
-      try {
-        row.itinerary = JSON.parse(row.itinerary);
-      } catch (e) {
-        row.itinerary = [];
-      }
-    } else if (!row.itinerary) {
+  } else if (!row.gallery) {
+    row.gallery = [];
+  }
+  
+  if (row.itinerary && typeof row.itinerary === 'string') {
+    try {
+      row.itinerary = JSON.parse(row.itinerary);
+    } catch (e) {
       row.itinerary = [];
     }
-    
-    // Inclus
-    if (row.inclus && typeof row.inclus === 'string') {
-      try {
-        row.inclus = JSON.parse(row.inclus);
-      } catch (e) {
-        row.inclus = [];
-      }
-    } else if (!row.inclus) {
+  } else if (!row.itinerary) {
+    row.itinerary = [];
+  }
+  
+  if (row.inclus && typeof row.inclus === 'string') {
+    try {
+      row.inclus = JSON.parse(row.inclus);
+    } catch (e) {
       row.inclus = [];
     }
-    
-    // Non inclus
-    if (row.non_inclus && typeof row.non_inclus === 'string') {
-      try {
-        row.non_inclus = JSON.parse(row.non_inclus);
-      } catch (e) {
-        row.non_inclus = [];
-      }
-    } else if (!row.non_inclus) {
+  } else if (!row.inclus) {
+    row.inclus = [];
+  }
+  
+  if (row.non_inclus && typeof row.non_inclus === 'string') {
+    try {
+      row.non_inclus = JSON.parse(row.non_inclus);
+    } catch (e) {
       row.non_inclus = [];
     }
-    
-    return row;
+  } else if (!row.non_inclus) {
+    row.non_inclus = [];
   }
-  return null;
+  
+  return row;
 };
 
 const create = async (data) => {
@@ -130,13 +125,12 @@ const create = async (data) => {
           featured, status, places_total, places_reservees, prix_enfant, conditions, 
           documents_requis, itinerary, inclus, non_inclus } = data;
 
-  // Formater les JSON pour MySQL
   const galleryStr = gallery ? (typeof gallery === 'string' ? gallery : JSON.stringify(gallery)) : '[]';
   const itineraryStr = itinerary ? (typeof itinerary === 'string' ? itinerary : JSON.stringify(itinerary)) : '[]';
   const inclusStr = inclus ? (typeof inclus === 'string' ? inclus : JSON.stringify(inclus)) : '[]';
   const nonInclusStr = non_inclus ? (typeof non_inclus === 'string' ? non_inclus : JSON.stringify(non_inclus)) : '[]';
 
-  const [result] = await pool.execute(`
+  await pool.execute(`
     INSERT INTO pelerinages (
       id, titre, location, country, duration, price, currency,
       start_date, end_date, inscription_deadline, description, long_description,
@@ -144,9 +138,9 @@ const create = async (data) => {
       prix_enfant, conditions, documents_requis, itinerary, inclus, non_inclus
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [id, titre, location, country, duration, price, currency, start_date, end_date,
-      inscription_deadline, description, long_description, image, galleryStr,
-      month, featured ? 1 : 0, status, places_total, places_reservees, prix_enfant,
-      conditions, documents_requis, itineraryStr, inclusStr, nonInclusStr]);
+      inscription_deadline || null, description, long_description || null, image || null, galleryStr,
+      month, featured ? 1 : 0, status, places_total || 30, places_reservees || 0, prix_enfant || null,
+      conditions || null, documents_requis || null, itineraryStr, inclusStr, nonInclusStr]);
 
   return getById(id);
 };
@@ -173,6 +167,8 @@ const update = async (id, data) => {
         } else if (!value) {
           value = '[]';
         }
+      } else if (value === null || value === '') {
+        value = null;
       }
       
       values.push(value);

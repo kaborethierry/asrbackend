@@ -1,8 +1,7 @@
 // src/models/admin.model.js
-const db = require('../config/db');  // ← CORRECTION ICI
+const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 
-// Récupérer un utilisateur par son email
 const getUserByEmail = async (email) => {
   try {
     const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
@@ -13,7 +12,6 @@ const getUserByEmail = async (email) => {
   }
 };
 
-// Vérifier le mot de passe
 const verifyPassword = async (user, password) => {
   try {
     if (user.password && user.password.startsWith('$2')) {
@@ -26,19 +24,12 @@ const verifyPassword = async (user, password) => {
   }
 };
 
-// Statistiques du dashboard
 const getStats = async () => {
   try {
     const [pelerinages] = await db.query('SELECT COUNT(*) as total FROM pelerinages');
-    const [inscriptionsEnAttente] = await db.query(
-      'SELECT COUNT(*) as total FROM inscriptions WHERE statut = "en_attente"'
-    );
-    const [inscriptionsConfirmees] = await db.query(
-      'SELECT COUNT(*) as total FROM inscriptions WHERE statut = "confirmee"'
-    );
-    const [messagesNonLus] = await db.query(
-      'SELECT COUNT(*) as total FROM contact_messages WHERE lu = 0'
-    );
+    const [inscriptionsEnAttente] = await db.query('SELECT COUNT(*) as total FROM inscriptions WHERE statut = "en_attente"');
+    const [inscriptionsConfirmees] = await db.query('SELECT COUNT(*) as total FROM inscriptions WHERE statut = "confirmee"');
+    const [messagesNonLus] = await db.query('SELECT COUNT(*) as total FROM contact_messages WHERE lu = 0');
 
     return {
       total_pelerinages: pelerinages[0]?.total || 0,
@@ -57,7 +48,6 @@ const getStats = async () => {
   }
 };
 
-// Données du dashboard
 const getDashboardData = async () => {
   try {
     const [inscriptionsRecentes] = await db.query(`
