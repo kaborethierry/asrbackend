@@ -1,3 +1,4 @@
+// src/controllers/pelerinage.controller.js
 const pelerinageModel = require('../models/pelerinage.model');
 const { slugify } = require('../utils/helpers');
 
@@ -30,7 +31,6 @@ const getById = async (req, res) => {
       return res.status(404).json({ message: 'Voyage non trouvé' });
     }
     
-    // S'assurer que les champs JSON sont des tableaux
     if (!pelerinage.itinerary) pelerinage.itinerary = [];
     if (!pelerinage.inclus) pelerinage.inclus = [];
     if (!pelerinage.non_inclus) pelerinage.non_inclus = [];
@@ -47,13 +47,14 @@ const create = async (req, res) => {
   try {
     const data = req.body;
     if (!data.id) {
-      data.id = slugify(data.titre);
+      const baseId = slugify(data.titre);
+      data.id = `${baseId}-${Date.now()}`;
     }
     const newPelerinage = await pelerinageModel.create(data);
     res.status(201).json(newPelerinage);
   } catch (error) {
     console.error('Erreur create:', error);
-    res.status(500).json({ message: 'Erreur lors de la création du voyage' });
+    res.status(500).json({ message: 'Erreur lors de la création du voyage: ' + error.message });
   }
 };
 
