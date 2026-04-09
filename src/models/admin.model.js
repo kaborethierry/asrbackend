@@ -29,7 +29,8 @@ const getStats = async () => {
     const [pelerinages] = await db.query('SELECT COUNT(*) as total FROM pelerinages');
     const [inscriptionsEnAttente] = await db.query('SELECT COUNT(*) as total FROM inscriptions WHERE statut = "en_attente"');
     const [inscriptionsConfirmees] = await db.query('SELECT COUNT(*) as total FROM inscriptions WHERE statut = "confirmee"');
-    const [messagesNonLus] = await db.query('SELECT COUNT(*) as total FROM contact_messages WHERE lu = 0');
+    // CORRECTION : La table s'appelle 'messages', pas 'contact_messages'
+    const [messagesNonLus] = await db.query('SELECT COUNT(*) as total FROM messages WHERE lu = 0');
 
     return {
       total_pelerinages: pelerinages[0]?.total || 0,
@@ -50,8 +51,17 @@ const getStats = async () => {
 
 const getDashboardData = async () => {
   try {
+    // CORRECTION : Adapter les colonnes à ta table inscriptions
     const [inscriptionsRecentes] = await db.query(`
-      SELECT i.*, p.titre as pelerinage_titre
+      SELECT 
+        i.id, 
+        i.nom, 
+        i.prenom, 
+        i.email, 
+        i.telephone, 
+        i.statut, 
+        i.created_at,
+        p.titre as pelerinage_titre
       FROM inscriptions i
       LEFT JOIN pelerinages p ON i.pelerinage_id = p.id
       ORDER BY i.created_at DESC
